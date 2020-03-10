@@ -14,7 +14,7 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.R
 /**
  * Configuration for Resource APIs.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 @EnableResourceServer
 @Configuration

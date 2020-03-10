@@ -6,8 +6,8 @@
 package com.oauth.server.controller;
 
 import com.oauth.server.controller.editor.SplitCollectionEditor;
-import com.oauth.server.dto.OAuthPartner;
-import com.oauth.server.dao.DynamoDBPartnerDetailsDAO;
+import com.oauth.server.database.dao.DynamoDBPartnerDetailsDAO;
+import com.oauth.server.database.modal.OAuthPartner;
 import java.util.Collection;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * MVC Controller for {@link OAuthPartner} add/edit/delete.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 @Controller
 @RequestMapping("partners")

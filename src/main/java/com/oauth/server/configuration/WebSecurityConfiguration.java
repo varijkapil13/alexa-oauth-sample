@@ -7,7 +7,6 @@ package com.oauth.server.configuration;
 
 import com.oauth.server.authentication.AuthenticationServiceProvider;
 import com.oauth.server.authentication.RoleEnum;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,51 +20,54 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 /**
  * Configuration for web security.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 @EnableWebSecurity
 @Configuration
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
-
-    @Autowired
-    private AuthenticationServiceProvider authenticationServiceProvider;
-
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/webjars/**", "/resources/**");
-
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .authorizeRequests()
-            .mvcMatchers("/login", "/logout.do", "/css/**", "/js/**", "/actuator/**").permitAll()
-            .mvcMatchers("/clients/**", "/partners/**").hasAuthority(RoleEnum.ROLE_USER_ADMIN.name())
-            .anyRequest().authenticated()
-            .and()
-            .formLogin()
-            .loginProcessingUrl("/login.do")
-            .usernameParameter("username")
-            .passwordParameter("password")
-            .loginPage("/login")
-            .and()
-            .httpBasic()
-            .and()
-            .logout()
-            .logoutRequestMatcher(new AntPathRequestMatcher("/logout.do"));
-    }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(authenticationServiceProvider);
-    }
-
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-
+  
+  private final AuthenticationServiceProvider authenticationServiceProvider;
+  
+  public WebSecurityConfiguration(AuthenticationServiceProvider authenticationServiceProvider) {
+    this.authenticationServiceProvider = authenticationServiceProvider;
+  }
+  
+  @Override
+  protected void configure(AuthenticationManagerBuilder auth) {
+    auth.authenticationProvider(authenticationServiceProvider);
+  }
+  
+  @Override
+  public void configure(WebSecurity web) {
+    web.ignoring().antMatchers("/webjars/**", "/resources/**");
+    
+  }
+  
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http
+        .authorizeRequests()
+        .mvcMatchers("/login", "/logout.do", "/css/**", "/js/**", "/actuator/**").permitAll()
+        .mvcMatchers("/clients/**", "/partners/**").hasAuthority(RoleEnum.ROLE_USER_ADMIN.name())
+        .anyRequest().authenticated()
+        .and()
+        .formLogin()
+        .loginProcessingUrl("/login.do")
+        .usernameParameter("username")
+        .passwordParameter("password")
+        .loginPage("/login")
+        .and()
+        .httpBasic()
+        .and()
+        .logout()
+        .logoutRequestMatcher(new AntPathRequestMatcher("/logout.do"));
+  }
+  
+  @Override
+  @Bean
+  public AuthenticationManager authenticationManagerBean() throws Exception {
+    return super.authenticationManagerBean();
+  }
+  
+  
 }

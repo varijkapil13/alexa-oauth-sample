@@ -6,13 +6,12 @@
 
 package com.oauth.server.api;
 
-import com.oauth.server.dao.DynamoDBPartnerTokenDAO;
-import com.oauth.server.dto.OAuthPartner;
 import com.oauth.server.authentication.UserIDAuthenticationToken;
-import com.oauth.server.dao.DynamoDBPartnerDetailsDAO;
+import com.oauth.server.database.dao.DynamoDBPartnerDetailsDAO;
+import com.oauth.server.database.dao.DynamoDBPartnerTokenDAO;
+import com.oauth.server.database.modal.OAuthPartner;
 import java.util.Map;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
 import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
@@ -31,17 +30,21 @@ import org.springframework.web.bind.annotation.RestController;
  * This endpoint is called by admin clients to retrieve access tokens received from partner OAuth providers (e.g. LWA).
  * <p>
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 @RestController
 public class PartnerTokenEndpoint {
-
-    @Autowired
-    private DynamoDBPartnerTokenDAO partnerTokenService;
-
-    @Autowired
-    private DynamoDBPartnerDetailsDAO partnerDetailsService;
-
+    
+    private final DynamoDBPartnerTokenDAO partnerTokenService;
+    
+    private final DynamoDBPartnerDetailsDAO partnerDetailsService;
+    
+    public PartnerTokenEndpoint(DynamoDBPartnerTokenDAO partnerTokenService,
+        DynamoDBPartnerDetailsDAO partnerDetailsService) {
+        this.partnerTokenService = partnerTokenService;
+        this.partnerDetailsService = partnerDetailsService;
+    }
+    
     /**
      * Endpoint to retrieve a client token from ClientTokenService.
      */
@@ -49,7 +52,7 @@ public class PartnerTokenEndpoint {
     public OAuth2AccessToken getPartnerToken(final @RequestParam Map<String, String> parameters) {
         final String userID = parameters.get("user_id");
         final String partnerId = parameters.get("partner_id");
-
+        
         OAuthPartner partner = partnerDetailsService.loadPartnerByPartnerId(partnerId);
 
         if (partner == null) {

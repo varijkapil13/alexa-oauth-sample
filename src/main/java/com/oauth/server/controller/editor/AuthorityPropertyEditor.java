@@ -17,7 +17,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 /**
  * A property Editor for {@link GrantedAuthority}
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 public class AuthorityPropertyEditor implements PropertyEditor {
 

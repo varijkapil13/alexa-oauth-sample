@@ -8,7 +8,7 @@ package com.oauth.server.authentication;
 /**
  * An Enum represents the authentication roles for users and clients.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 public enum RoleEnum {
     ROLE_USER_ADMIN, //A role for administrators to manage clients and partners.

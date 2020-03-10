@@ -5,14 +5,18 @@
  */
 package com.oauth.server.configuration;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.oauth.server.dao.DynamoDBClientDetailsDAO;
-import com.oauth.server.dao.DynamoDBPartnerTokenDAO;
-import com.oauth.server.dao.DynamoDBTokenDAO;
 import com.oauth.server.authentication.AuthenticationServiceProvider;
-import com.oauth.server.dao.DynamoDBAuthorizationCodeDAO;
-import com.oauth.server.dao.DynamoDBPartnerDetailsDAO;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.oauth.server.database.dao.DynamoDBAuthorizationCodeDAO;
+import com.oauth.server.database.dao.DynamoDBClientDetailsDAO;
+import com.oauth.server.database.dao.DynamoDBPartnerDetailsDAO;
+import com.oauth.server.database.dao.DynamoDBPartnerTokenDAO;
+import com.oauth.server.database.dao.DynamoDBTokenDAO;
+import com.oauth.server.database.service.IOAuthAccessToken;
+import com.oauth.server.database.service.IOAuthClientDetails;
+import com.oauth.server.database.service.IOAuthCode;
+import com.oauth.server.database.service.IOAuthPartner;
+import com.oauth.server.database.service.IOAuthPartnerToken;
+import com.oauth.server.database.service.IOAuthRefreshToken;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -33,83 +37,102 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 /**
  * Configuration for authorization server.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 @Configuration
 @EnableAuthorizationServer
 public class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Autowired
-    private DynamoDBMapper dynamoDBMapper;
-
-    @Bean
-    public AuthenticationServiceProvider authenticationServiceProvider() {
-        return new AuthenticationServiceProvider(passwordEncoder());
-    }
-
-    @Bean
-    @Scope(proxyMode = ScopedProxyMode.INTERFACES)
-    public ClientTokenServices clientTokenServices() {
-        return new DynamoDBPartnerTokenDAO(dynamoDBMapper);
-    }
-
-    @Bean
-    @Scope(proxyMode = ScopedProxyMode.INTERFACES)
-    public TokenStore tokenStore() {
-        return new DynamoDBTokenDAO(dynamoDBMapper);
-    }
-
-    @Bean
-    @Scope(proxyMode = ScopedProxyMode.INTERFACES)
-    public ApprovalStore approvalStore() {
-        TokenApprovalStore approvalStore = new TokenApprovalStore();
-        approvalStore.setTokenStore(tokenStore());
-        return approvalStore;
-    }
-
-    @Bean
-    @Scope(proxyMode = ScopedProxyMode.INTERFACES)
-    public AuthorizationCodeServices authorizationCodeServices() {
-        return new DynamoDBAuthorizationCodeDAO(dynamoDBMapper);
-    }
-
-    @Bean
-    public DynamoDBClientDetailsDAO dynamoDBClientDetailsService() {
-        return new DynamoDBClientDetailsDAO(dynamoDBMapper, passwordEncoder());
-    }
-
-    @Bean
-    public DynamoDBPartnerDetailsDAO dynamoDBPartnerDetailsService() {
-        return new DynamoDBPartnerDetailsDAO(dynamoDBMapper);
-    }
-
-    @Bean
-    public DynamoDBPartnerTokenDAO dynamoDBPartnerTokenService() {
-        return new DynamoDBPartnerTokenDAO(dynamoDBMapper);
-    }
-
-    @Override
-    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.withClientDetails(dynamoDBClientDetailsService());
-    }
-
-    @Override
-    public void configure(AuthorizationServerSecurityConfigurer oauthServer) {
-        oauthServer.allowFormAuthenticationForClients();
-    }
-
-    @Override
-    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-        endpoints
-            .approvalStore(approvalStore())
-            .authorizationCodeServices(authorizationCodeServices())
-            .tokenStore(tokenStore())
-            .authenticationManager(authenticationServiceProvider())
-            .userDetailsService(authenticationServiceProvider());
-    }
+  
+  private final IOAuthPartnerToken ioAuthPartnerToken;
+  
+  private final IOAuthAccessToken ioAuthAccessToken;
+  private final IOAuthRefreshToken ioAuthRefreshToken;
+  
+  private final IOAuthCode ioAuthCode;
+  
+  private final IOAuthClientDetails ioAuthClientDetails;
+  
+  private final IOAuthPartner ioAuthPartner;
+  
+  public AuthorizationServerConfiguration(IOAuthPartnerToken ioAuthPartnerToken, IOAuthAccessToken ioAuthAccessToken,
+      IOAuthRefreshToken ioAuthRefreshToken, IOAuthCode ioAuthCode, IOAuthClientDetails ioAuthClientDetails, IOAuthPartner ioAuthPartner) {
+    this.ioAuthPartnerToken = ioAuthPartnerToken;
+    this.ioAuthAccessToken = ioAuthAccessToken;
+    this.ioAuthRefreshToken = ioAuthRefreshToken;
+    this.ioAuthCode = ioAuthCode;
+    this.ioAuthClientDetails = ioAuthClientDetails;
+    this.ioAuthPartner = ioAuthPartner;
+  }
+  
+  @Bean
+  @Scope(proxyMode = ScopedProxyMode.INTERFACES)
+  public ClientTokenServices clientTokenServices() {
+    return
+        new DynamoDBPartnerTokenDAO(ioAuthPartnerToken);
+  }
+  
+  @Bean
+  public DynamoDBPartnerDetailsDAO dynamoDBPartnerDetailsService() {
+    return new DynamoDBPartnerDetailsDAO(ioAuthPartner);
+  }
+  
+  @Bean
+  public DynamoDBPartnerTokenDAO dynamoDBPartnerTokenService() {
+    return new DynamoDBPartnerTokenDAO(ioAuthPartnerToken);
+  }
+  
+  @Override
+  public void configure(AuthorizationServerSecurityConfigurer oauthServer) {
+    oauthServer.allowFormAuthenticationForClients();
+  }
+  
+  @Override
+  public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+    clients.withClientDetails(dynamoDBClientDetailsService());
+  }
+  
+  @Bean
+  public DynamoDBClientDetailsDAO dynamoDBClientDetailsService() {
+    return new DynamoDBClientDetailsDAO(ioAuthClientDetails, passwordEncoder());
+  }
+  
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+  
+  @Override
+  public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
+    endpoints
+        .approvalStore(approvalStore())
+        .authorizationCodeServices(authorizationCodeServices())
+        .tokenStore(tokenStore())
+        .authenticationManager(authenticationServiceProvider())
+        .userDetailsService(authenticationServiceProvider());
+  }
+  
+  @Bean
+  @Scope(proxyMode = ScopedProxyMode.INTERFACES)
+  public ApprovalStore approvalStore() {
+    TokenApprovalStore approvalStore = new TokenApprovalStore();
+    approvalStore.setTokenStore(tokenStore());
+    return approvalStore;
+  }
+  
+  @Bean
+  @Scope(proxyMode = ScopedProxyMode.INTERFACES)
+  public AuthorizationCodeServices authorizationCodeServices() {
+    return new DynamoDBAuthorizationCodeDAO(ioAuthCode);
+  }
+  
+  @Bean
+  @Scope(proxyMode = ScopedProxyMode.INTERFACES)
+  public TokenStore tokenStore() {
+    return new DynamoDBTokenDAO(ioAuthAccessToken, ioAuthRefreshToken);
+  }
+  
+  @Bean
+  public AuthenticationServiceProvider authenticationServiceProvider() {
+    return new AuthenticationServiceProvider(passwordEncoder());
+  }
 }

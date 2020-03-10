@@ -6,16 +6,15 @@
 package com.oauth.server.authentication;
 
 import com.google.common.collect.ImmutableList;
+import java.security.Principal;
 import lombok.NonNull;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
-import java.security.Principal;
-
 /**
  * A simple User-ID based authentication token.
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 public class UserIDAuthenticationToken extends AbstractAuthenticationToken {
 

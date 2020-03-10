@@ -6,13 +6,12 @@
 package com.oauth.server.controller.editor;
 
 import java.util.Collection;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.propertyeditors.CustomCollectionEditor;
 
 /**
  * A property Editor for {@link Collection}
  *
- * @author Lucun Cai
+ * @author Varij Kapil
  */
 public class SplitCollectionEditor extends CustomCollectionEditor {
 
@@ -27,7 +26,7 @@ public class SplitCollectionEditor extends CustomCollectionEditor {
 
     @Override
     public void setAsText(String text) throws IllegalArgumentException {
-        if (StringUtils.isBlank(text)) {
+        if (text.isEmpty()) {
             super.setValue(super.createCollection(this.collectionType, 0));
         } else {
             super.setValue(text.split(splitRegex));
